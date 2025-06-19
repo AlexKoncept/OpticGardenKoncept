@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Opti Garden Koncept</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-image: url('mon-fond.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: #333;
+      transition: background 0.5s, color 0.5s;
+    }
+
+    body.dark-mode {
+      background-color: #1c1c1c;
+      color: #f0f0f0;
+    }
+
+    .dark-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: inherit;
+      z-index: 1000;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.55);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+      backdrop-filter: blur(5px);
+      text-align: center;
+    }
+
+    body.dark-mode .container {
+      background: rgba(40, 40, 40, 0.65);
+    }
+
+    h1, h2 {
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+
+    h1 { font-size: 2.5rem; }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    input[type="text"], button, input[type="color"] {
+      border-radius: 8px;
+    }
+
+    .controls input[type="text"] {
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      font-size: 1rem;
+      width: 250px;
+    }
+
+    .controls input[type="color"] {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background-color: transparent;
+      cursor: pointer;
+    }
+
+    button {
+      background: linear-gradient(145deg, #2ecc71, #28b485);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .canvas-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 1rem 0;
+    }
+
+    canvas {
+      border-radius: 16px;
+      background: #fff;
+      animation: pulse 20s infinite alternate ease-in-out;
+      max-width: 100%;
+      height: auto;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); filter: hue-rotate(0deg); }
+      100% { transform: scale(1.01); filter: hue-rotate(360deg); }
+    }
+
+    .action-buttons {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .gallery img {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .gallery img:hover {
+      transform: scale(1.05) translateY(-5px);
+    }
+
+    #info { font-size: 1.15rem; margin-top: 1rem; font-style: italic; }
+  </style>
+</head>
+<body>
+  <button class="dark-toggle" onclick="toggleDarkMode()">🌓</button>
+  <div class="container">
+    <h1>🌱 Opti Garden Koncept</h1>
+    <p><em>💡 Astuce : entrez une graine comme “Spirale Bleue” ou cliquez sur 🎲 Koncept Aléatoire</em></p>
+
+    <div class="controls">
+      <input type="text" id="seedInput" placeholder="Entrez votre graine..." title="Saisissez un mot-clé comme 'Fractal Bleu'" />
+      <input type="color" id="color1" value="#3498db" />
+      <input type="color" id="color2" value="#e67e22" />
+      <input type="color" id="color3" value="#2ecc71" />
+      <input type="color" id="color4" value="#9b59b6" />
+      <button onclick="generateArt()">Planter</button>
+      <button onclick="randomKoncept()">🎲 Koncept Aléatoire</button>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="canvas" width="400" height="400"></canvas>
+    </div>
+
+    <div class="action-buttons">
+      <button onclick="saveCreation()">Ajouter au jardin</button>
+      <button onclick="downloadCreation()">Télécharger</button>
+    </div>
+
+    <div id="info">L’image que vous voyez est parfaitement fixe. Si elle semble bouger, c’est votre cerveau qui joue avec vous.</div>
+
+    <h2>🌼 Galerie de votre jardin</h2>
+    <div class="gallery" id="gallery"></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const gallery = document.getElementById("gallery");
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    function generateArt() {
+      const seed = document.getElementById("seedInput").value || "Graine par défaut";
+      const color1 = document.getElementById("color1").value;
+      const color2 = document.getElementById("color2").value;
+      const color3 = document.getElementById("color3").value;
+      const color4 = document.getElementById("color4").value;
+      const colors = [color1, color2, color3, color4];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const rng = seed.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      for (let i = 0; i < seed.length * 12; i++) {
+        const x = (Math.sin(i + rng) * 10000) % canvas.width;
+        const y = (Math.cos(i * 1.2 + rng) * 10000) % canvas.height;
+        const size = Math.random() * 25 + 5;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(Math.abs(x), Math.abs(y), size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function randomKoncept() {
+      const seeds = ["Galaxie Kaléidoscope", "Racines Cosmiques", "Fractal Floral", "Nuée Chromatique", "Pulse Orbitale"];
+      const colors = ["#f39c12", "#8e44ad", "#16a085", "#c0392b", "#2980b9"];
+      document.getElementById("seedInput").value = seeds[Math.floor(Math.random() * seeds.length)];
+      document.getElementById("color1").value = colors[Math.floor(Math.random() * colors.length)];
+      document.getElementById("color2").value = colors[Math.floor(Math.random() * colors.length)];
+      document.getElementById("color3").value = colors[Math.floor(Math.random() * colors.length)];
+      document.getElementById("color4").value = colors[Math.floor(Math.random() * colors.length)];
+      generateArt();
+    }
+
+    function saveCreation() {
+      const dataURL = canvas.toDataURL();
+      addImageToGallery(dataURL);
+      const creations = JSON.parse(localStorage.getItem("optiGarden") || "[]");
+      creations.push(dataURL);
+      localStorage.setItem("optiGarden", JSON.stringify(creations));
+    }
+
+    function addImageToGallery(src) {
+      const img = document.createElement("img");
+      img.src = src;
+      img.onclick = (event) => deleteCreation(event);
+      gallery.appendChild(img);
+    }
+
+    function deleteCreation(event) {
+      if (confirm("Voulez-vous vraiment supprimer cette création de votre jardin ?")) {
+        const imgToDelete = event.target;
+        const dataURLToDelete = imgToDelete.src;
+        let creations = JSON.parse(localStorage.getItem("optiGarden") || "[]");
+        creations = creations.filter(url => url !== dataURLToDelete);
+        localStorage.setItem("optiGarden", JSON.stringify(creations));
+        imgToDelete.remove();
+      }
+    }
+
+    function downloadCreation() {
+      const link = document.createElement('a');
+      link.download = `opti-garden-${Date.now()}.jpg`;
+      link.href = canvas.toDataURL("image/jpeg", 0.9);
+      link.click();
+    }
+
+    window.onload = () => {
+      const creations = JSON.parse(localStorage.getItem("optiGarden") || "[]");
+      creations.forEach(src => {
+        addImageToGallery(src);
+      });
+    };
+  </script>
+</body>
+</html>
